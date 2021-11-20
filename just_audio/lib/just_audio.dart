@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:crypto/crypto.dart';
@@ -2701,7 +2702,10 @@ class LockCachingAudioSource extends StreamAudioSource {
     File getEffectiveCacheFile() =>
         partialCacheFile.existsSync() ? partialCacheFile : cacheFile;
 
-    final httpClient = HttpClient();
+    ByteData data = await rootBundle.load('assets/raw/certificate.crt');
+    SecurityContext context = new SecurityContext();
+    context.setTrustedCertificatesBytes(data.buffer.asUint8List());
+    final httpClient = HttpClient(context: context);
     final httpRequest = await httpClient.getUrl(uri);
     if (headers != null) {
       httpRequest.headers.clear();
@@ -2820,7 +2824,10 @@ class LockCachingAudioSource extends StreamAudioSource {
         _requests.remove(request);
         final start = request.start!;
         final end = request.end ?? sourceLength;
-        final httpClient = HttpClient();
+        ByteData data = await rootBundle.load('assets/raw/certificate.crt');
+        SecurityContext context = new SecurityContext();
+        context.setTrustedCertificatesBytes(data.buffer.asUint8List());
+        final httpClient = HttpClient(context: context);
         httpClient.getUrl(uri).then((httpRequest) async {
           if (headers != null) {
             httpRequest.headers.clear();
@@ -3018,7 +3025,10 @@ _ProxyHandler _proxyHandlerForSource(StreamAudioSource source) {
 /// TODO: Recursively attach headers to items in playlists like m3u8.
 _ProxyHandler _proxyHandlerForUri(Uri uri, Map<String, String>? headers) {
   Future<void> handler(HttpRequest request) async {
-    final originRequest = await HttpClient().getUrl(uri);
+    ByteData data = await rootBundle.load('assets/raw/certificate.crt');
+    SecurityContext context = new SecurityContext();
+    context.setTrustedCertificatesBytes(data.buffer.asUint8List());
+    final originRequest = await HttpClient(context: context).getUrl(uri);
 
     // Rewrite request headers
     final host = originRequest.headers.value('host');
